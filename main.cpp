@@ -1,21 +1,74 @@
 #include <QCoreApplication>
 #include <iostream>
+#include <thread>
+#include <chrono>
 using namespace std;
+
+#define RX 0.5 // dãn trục mặc định
+
+void clearScreen()
+{
+    // \033[2J: Xóa toàn bộ màn hình
+    // \033[H : Di chuyển con trỏ về góc trên bên trái (tọa độ 0,0)
+    // std::cout << "\033[2J\033[H" << std::flush;
+    system("cls");
+}
+
+bool isInsideDonut(double x, double y, double rx, double ry)
+{
+    x *= RX; // dãn trục mặc định
+    y *= ry;
+    double r1 = 12;
+    double r2 = 9;
+    double xCenter = 12;  // ứng với x màn hình là 24
+    double yCenter = 12;
+    if (rx*rx*(x - xCenter)*(x - xCenter) + (y - yCenter)*(y - yCenter) <= r1*r1  // R = 12, gốc O trái trên, x hướng sang phải y hướng xuống
+        && rx*rx*(x - xCenter)*(x - xCenter) + (y - yCenter)*(y - yCenter) >= r2*r2)  // nhân rx*rx để tạo Elipse thể hiện phép quay
+            return true;
+    return false;
+}
+
+void renderFrame(double rx, double ry)
+{
+    for (int y = 0; y < 30 - 1; ++y)  // in theo dòng để xuống dòng, -1 để đỡ phải cuộn chuột lên, _ ko ra khỏi khung view
+    {
+        for (int x = 0; x < 120 - 1; ++x)
+        {
+            // rx < 1: co theo trục x vì chiều rộng ký tự ~ 1/2 chiều cao ký tự, trục x giờ sẽ nhiều ký tự gấp đôi y
+            if (isInsideDonut(x, y, rx, ry))
+                cout << "@";
+            else
+                cout << " ";
+        }
+        cout << endl;
+    }
+}
 
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
-    //the terminal is 80x24, the pixel is .,-~:;=!*#$@ from dimmest to brightest
+    //the terminal is 120x30 for qt-cmd on windows, the pixel is .,-~:;=!*#$@ from dimmest to brightest
     // now build the static simple plate with @
-    for (int i = 0; i < 25; ++i)
+
+//    • Công thức: (x - a)^2 + (y - b)^2 = R^2
+//    • Trong đó:
+//        • Tâm đường tròn là I(a; b).
+//        • Bán kính là R > 0.
+
+    while (true)
     {
-        for (int j = 0; j < 80; ++j)
-            if ((12-i)*(12-i) + (12-j)*(12-j) <= 12*12
-                    && (12-i)*(12-i) + (12-j)*(12-j) >= 11*11)
-                cout << "@@";
-            else
-                cout << "  ";
-        cout << endl;
+        for (int i = 1; i < 5; i+=1)
+        {
+            renderFrame(i, 1);
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            clearScreen();
+        }
+        for (int i = 6; i > 0; i-=1)
+        {
+            renderFrame(i, 1);
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            clearScreen();
+        }
     }
 
     return a.exec();
